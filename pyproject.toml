@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "concreteness-checker"
+version = "0.1.0"
+description = "Detect false concreteness in prose."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dependencies = ["click>=8.1,<9"]
+
+[project.scripts]
+concreteness-checker = "concreteness_checker.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/concreteness_checker"]
