@@ -10,52 +10,76 @@ description: |
 
 # Concreteness Checker
 
-Two-pass detection of false concreteness.
+Scores prose for false concreteness: text that sounds grounded through physical metaphor but contains no observable referent. Returns per-sentence concreteness scores and a list of suspect words.
 
-## Pass 1 — run the tool
+## Commands
+
+Analyze a file:
 
 ```bash
 uvx --from git+https://github.com/SteveJSteiner/concreteness-checker concreteness-checker analyze --file document.md
 ```
 
-## How to read the output
+Analyze a passage directly:
 
-- **Surface concreteness**: the raw average concreteness score of the scored content words in the text
-- **Grounded concreteness**: the same average after flagged false friends are discounted to a low grounding score
-- **Concreteness gap**: `surface - grounded`; a larger gap means the prose sounds more concrete than it really is
-- **False friends**: words with concrete sensory associations that are probably being used metaphorically in context
-- **Vocabulary coverage**: how much of the text matched the built-in norms lexicon
+```bash
+uvx --from git+https://github.com/SteveJSteiner/concreteness-checker concreteness-checker analyze --text "The pipeline handles edge cases through a layered filter."
+```
 
-Key numbers:
-- Gap > 0.3: metaphorical inflation
-- Surface > 3.5, Grounded < 3.0: THE DANGEROUS ZONE — sounds concrete, isn't
+Pipe text on stdin:
+
+```bash
+cat document.md | uvx --from git+https://github.com/SteveJSteiner/concreteness-checker concreteness-checker analyze
+```
+
+Get machine-readable output:
+
+```bash
+uvx --from git+https://github.com/SteveJSteiner/concreteness-checker concreteness-checker analyze --file document.md --format json
+```
+
+## Interpreting output
+
+The tool reports:
+
+- **Surface concreteness**: raw average concreteness score (1–5) of scored content words
+- **Grounded concreteness**: same average after false friends are discounted to 2.0
+- **Concreteness gap**: surface minus grounded; larger gap means prose sounds more concrete than it is
+- **Vocabulary coverage**: fraction of content words matched in the built-in norms lexicon
+- **False friends**: high-concreteness words (pipeline, handle, layer, bridge, …) appearing in a metaphor-dense context
+
+Key thresholds:
+
+- Gap > 0.3: likely metaphorical inflation
+- Surface > 3.5 and Grounded < 3.0: dangerous zone — sounds concrete, isn't
 - Surface < 2.5: overtly abstract (honest about it)
-- Multiple false friends in one sentence: likely metaphor-saturated prose rather than genuinely sensory description
+- Multiple false friends in one sentence: prose is probably metaphor-saturated
 
-## Pass 2 — interrogate flagged sentences
+Relay to the user: the summary line, the concreteness gap value, and each false friend with its sentence.
 
-For each flagged sentence, the LLM attempts:
+## Pass 2: interrogating flagged sentences
+
+The tool flags suspect sentences. Interrogating them is your job. For each flagged sentence:
 
 1. **Name a specific instance** — not a type, an actual one
-2. **Describe what you'd observe** — what changes, in what order
-3. **State a falsifying condition** — what would make this wrong
+2. **Describe what you would observe** — what changes, in what order
+3. **State a falsifying condition** — what would make the claim wrong
 
 Grade each:
+
 - **Grounded**: all three succeed with specifics
-- **Metaphorically grounded**: instance exists but observation is figurative  
-- **Floating**: instance attempt produces another type-level description
-- **Load-bearing vague**: does real argumentative work but specifics unresolvable
+- **Metaphorically grounded**: the instance exists but the observation is figurative
+- **Floating**: the instance attempt produces another type-level description
+- **Load-bearing vague**: does real argumentative work but specifics are unresolvable
 
-Example:
-CLAIM: "The settlement machinery handles topology changes through witness tokens."
-Instance: [attempt] → "When a SeamClaim changes from Admissible to Promoted..."
-Observation: [attempt] → "the witness token records which GraspContext evaluated it"
-Falsification: "If you replayed without that context, the Promoted field would be empty"
-Grade: METAPHORICALLY GROUNDED — "machinery" and "handles" are figurative but the
-instance is real and the falsification works.
+## Error handling
 
-## Calibration note
+- `Error: Invalid value for '--file'` — the path does not exist; check it
+- `Error: Provide --file, --text, or pipe text on stdin.` — no input was given; supply one of the three
+- `Error: Use either --file or --text, not both.` — remove one of the two options
 
-The tool is deliberately aggressive. It is designed to over-flag metaphorical concreteness so an LLM can inspect suspicious sentences rather than trust the surface wording.
+## What not to do
 
-Dead metaphors such as "thread pool", "pipeline", or "layer" may be perfectly acceptable for a given technical audience. A flag is not automatically a defect; it is a prompt to check whether the sentence cashes out in specifics.
+- Do not run Pass 2 through the tool; it has no LLM component
+- Do not treat every flag as a defect — dead metaphors ("thread pool", "pipeline") may be appropriate for a technical audience; a flag is a prompt to check whether the sentence cashes out in specifics
+- Do not supply both `--file` and `--text` in the same invocation

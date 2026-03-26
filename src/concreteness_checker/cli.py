@@ -12,7 +12,7 @@ from .norms import NORMS
 
 def _read_input(filepath: str | None, text: str | None) -> str:
     if filepath and text:
-        raise click.UsageError("Use either --file/--filepath or --text, not both.")
+        raise click.UsageError("Use either --file or --text, not both.")
     if filepath:
         return Path(filepath).read_text(encoding="utf-8")
     if text is not None:
@@ -90,6 +90,7 @@ def main() -> None:
 @click.option("text", "--text", "-t", type=str)
 @click.option("fmt", "--format", type=click.Choice(["text", "json"], case_sensitive=False), default="text", show_default=True)
 def analyze_cmd(filepath: str | None, text: str | None, fmt: str) -> None:
+    """Score prose for false concreteness."""
     source = _read_input(filepath, text)
     report = analyze_text(source)
     if fmt == "json":
