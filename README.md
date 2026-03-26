@@ -38,7 +38,7 @@ Two averages are computed:
 A *false friend* is a word with a high concreteness score that is probably being used metaphorically. The tool identifies false friends using a list of known metaphor donors — words like *pipeline*, *handle*, *thread*, *layer*, *bridge*, *hook*, *root*, *stack*, *scaffold* — and checks whether they appear in a metaphor-saturated context. Two triggers:
 
 1. More than 30% of the scored words in a sentence are metaphor donors
-2. A metaphor donor appears in a neighborhood of low-concreteness words (average score < 2.8 among the two nearest scored words on each side)
+2. A metaphor donor appears in a neighborhood of low-concreteness words (average score < 2.8 among all scored words within two content-word positions on either side)
 
 The **concreteness gap** (surface minus grounded) is the primary signal. A gap above 0.3 indicates metaphorical inflation. A gap near zero means the surface score is honest.
 
@@ -105,7 +105,7 @@ concreteness-checker analyze [OPTIONS]
       --help               Show this message and exit
 ```
 
-Exactly one of `--file`, `--text`, or stdin must be provided.
+Input may be provided via `--file`, `--text`, or stdin. If you specify `--file` or `--text`, any data on stdin will be ignored.
 
 ## Norms lexicon
 
